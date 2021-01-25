@@ -1,10 +1,54 @@
-FROM golang:latest
+# Build image
+FROM golang:1.14-alpine AS builder
 
-RUN go get github.com/gorilla/mux
-RUN go get github.com/gorilla/handlers
-RUN go get github.com/go-sql-driver/mysql
-RUN go get github.com/jinzhu/gorm
-RUN go get github.com/joho/godotenv
-RUN go get github.com/gomodule/redigo/redis
+ENV GOFLAGS="-mod=readonly"
 
-COPY . .
+RUN apk add --update --no-cache ca-certificates make git curl mercurial
+
+RUN mkdir -p /workspace
+WORKDIR /workspace
+
+ARG GOPROXY
+
+COPY go.* /workspace/
+RUN go mod download
+
+COPY . /workspace
+COPY ./wait-for-db.sh /workspace/wait-for-db.sh
+
+ARG BUILD_TARGET
+
+RUN set -xe && \
+    if [[ "${BUILD_TARGET}" == "debug" ]]; then \
+        cd /tmp; GOBIN=/workspace/build/debug go get github.com/go-delve/delve/cmd/dlv; cd -; \
+        make build-debug; \
+        mv build/debug /build; \
+    else \
+        make build-release; \
+        mv build/release /build; \
+    fi
+
+
+# Final image
+FROM alpine:3.11
+
+RUN apk add --update --no-cache ca-certificates tzdata bash curl
+
+SHELL ["/bin/bash", "-c"]
+
+# set up nsswitch.conf for Go's "netgo" implementation
+# https://github.com/gliderlabs/docker-alpine/issues/367#issuecomment-424546457
+RUN test ! -e /etc/nsswitch.conf && echo 'hosts: files dns' > /etc/nsswitch.conf
+
+ARG BUILD_TARGET
+
+RUN if [[ "${BUILD_TARGET}" == "debug" ]]; then apk add --update --no-cache libc6-compat; fi
+
+COPY --from=builder /build/* /usr/local/bin/
+COPY --from=builder /workspace/wait-for-db.sh /wait-for-db.sh
+RUN chmod 555 /wait-for-db.sh
+
+RUN ls -la /usr/local/bin/
+
+EXPOSE 8080
+CMD ["article-assessment"]

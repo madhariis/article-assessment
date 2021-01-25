@@ -8,15 +8,15 @@ import (
 	"log"
 	"net/http"
 
-	"./controllers"
-	"./models"
+	"github.com/madhariis46/article-assessment/controllers"
+	"github.com/madhariis46/article-assessment/models"
 )
 
 var db *gorm.DB
 
 func initDB() {
 	var err error
-	dataSourceName := "root:root@tcp(localhost:3306)/?parseTime=True"
+	dataSourceName := "root:root@tcp(db:3306)/?parseTime=True"
 	db, err = gorm.Open("mysql", dataSourceName)
 
 	if err != nil {
@@ -26,7 +26,7 @@ func initDB() {
 
 	// Create the database. This is a one-time step.
 	// Comment out if running multiple times - You may see an error otherwise
-	//db.Exec("CREATE DATABASE articles_db")
+	db.Exec("CREATE DATABASE articles_db")
 	db.Exec("USE articles_db")
 
 	// Migration to create tables for Article and Item schema

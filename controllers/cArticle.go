@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"../models"
+	"github.com/madhariis46/article-assessment/models"
 	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
@@ -20,7 +20,7 @@ func NewCtrlArticle() *CtrlArticle {
 
 func (c *CtrlArticle) CreateArticle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	dataSourceName := "root:root@tcp(localhost:3306)/?parseTime=True"
+	dataSourceName := "root:root@tcp(db:3306)/?parseTime=True"
 	db, err := gorm.Open("mysql", dataSourceName)
 	if err != nil {
 		fmt.Println(err)
@@ -45,7 +45,7 @@ func (c *CtrlArticle) CreateArticle(w http.ResponseWriter, r *http.Request) {
 
 func (c *CtrlArticle) GetArticles(w http.ResponseWriter, r *http.Request) {
 	w. Header().Set("Content-Type", "application/json")
-	dataSourceName := "root:root@tcp(localhost:3306)/?parseTime=True"
+	dataSourceName := "root:root@tcp(db:3306)/?parseTime=True"
 	db, err := gorm.Open("mysql", dataSourceName)
 	if err != nil {
 		fmt.Println(err)

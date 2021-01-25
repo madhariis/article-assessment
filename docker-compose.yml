@@ -1,0 +1,31 @@
+version: "3.1"
+
+services:
+    db:
+        image: mysql:5.6
+        command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+        environment:
+            MYSQL_ROOT_PASSWORD: "root"
+            MYSQL_USER: "app_user"
+            MYSQL_PASSWORD: "password"
+            MYSQL_DATABASE: article_app
+        ports:
+            - 127.0.0.1:3306:3306
+        volumes:
+            - ./var/docker/volumes/mysql:/var/lib/mysql
+
+    dockerhost:
+        image: qoomon/docker-host:2.3.0
+        cap_add: [ 'NET_ADMIN', 'NET_RAW' ]
+
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - 127.0.0.1:8080:8080
+        depends_on:
+            - db
+        command: [ "/wait-for-db.sh", "db:3306", "--timeout=0", "--", "article-assessment" ]
+
